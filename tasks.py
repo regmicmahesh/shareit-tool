@@ -1,17 +1,22 @@
-import threading
-import subprocess
-import socket
-import queue
-from qrcode import QRCode
 from abc import ABC, abstractmethod
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+import queue
+import socket
+import threading
 
-class Task(ABC):
+from qrcode import QRCode
+
+
+class Task():
     @abstractmethod
     def run(self):
         """
         This method is called when the task is started.
         """
         pass
+    
+
 
 class TaskQueue(threading.Thread):
     def __init__(self, task_queue: queue.Queue[Task]):
@@ -49,8 +54,11 @@ class SpawnPythonServerTask(Task):
         self.current_ports.append({"port": self.port, "dir": self.dir_})
         self.lock.release()
 
-        subprocess.Popen(
-            "python3 -m http.server {} --directory {}".format(self.port, self.dir_).split(" "))
+        def factoryRequestHandler():
+            return partial(SimpleHTTPRequestHandler, directory=self.dir_)
+
+        server = ThreadingHTTPServer(('', self.port), factoryRequestHandler())
+        server.serve_forever()
 
 
 class CreateQRCodeTask(Task):
@@ -86,7 +94,8 @@ class CompleteTask(Task):
         """
         Runs the complete task.
         """
-        self.task_queue.put(SpawnPythonServerTask(self.port, self.filepath, self.lock, self.current_ports))
+        self.task_queue.put(SpawnPythonServerTask(
+            self.port, self.filepath, self.lock, self.current_ports))
         ip = socket.gethostbyname(socket.gethostname())
         self.task_queue.put(CreateQRCodeTask(
             "http://{}:{}".format(ip, self.port), f"{self.port}-qrcode.png"))

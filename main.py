@@ -16,7 +16,7 @@ def initialize_thread_pool():
     """
     Initialize the thread pool.
     """
-    for i in range(5):
+    for _ in range(5):
         taskDaemon = TaskQueue(TASK_QUEUE)
         taskDaemon.daemon = True
         taskDaemon.start()

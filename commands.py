@@ -2,16 +2,12 @@ import queue
 from enum import Enum
 import threading
 from tasks import CompleteTask, Task
+from constants import COMMAND_HANDLER_KEYS, HELP_MESSAGE
 
 
 class CommandHandler:
 
-    class KEYS(Enum):
-        """
-        Enum for the keys used in the command queue.
-        """
-        PRINT_ALLOCATED_PORTS = 1
-        SHARE_FILE = 2
+    KEYS = COMMAND_HANDLER_KEYS
 
     def __init__(self, current_ports: list, task_queue: queue.Queue[Task], lock: threading.Lock):
         """
@@ -55,10 +51,4 @@ class CommandHandler:
 
     @staticmethod
     def help():
-        """
-        Prints the help message.
-        """
-        print("What do you want to do?")
-        print("1. Share file")
-        print("2. Print allocated ports")
-        print("3. Exit")
+        print(HELP_MESSAGE)
